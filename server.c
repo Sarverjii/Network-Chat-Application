@@ -25,7 +25,7 @@ void getportnoandIP() {
 
     // Get a list of network interfaces
     if (getifaddrs(&ifaddr) == -1) {
-        perror("Error getting network interfaces");
+        perror("\033[1;31mError getting network interfaces\033[0m");
         exit(1);
     }
 
@@ -40,7 +40,7 @@ void getportnoandIP() {
             // Ignore the loopback interface
             if (strcmp(ifa->ifa_name, "lo") != 0) {
                 inet_ntop(AF_INET, &sa->sin_addr, ip_address, INET_ADDRSTRLEN);
-                printf("The server is running on IP Address : %s \n",ip_address);
+                printf("\n\n\033[1;32mThe server is running on IP Address :\033[0m %s \n",ip_address);
                 //printf("Interface: %s, IP Address: %s\n", ifa->ifa_name, ip_address);
                 break;
             }
@@ -50,7 +50,7 @@ void getportnoandIP() {
     freeifaddrs(ifaddr);
 
     if (strlen(ip_address) == 0) {
-        fprintf(stderr, "No active network interface found.\n");
+        fprintf(stderr, "\033[1;31mNo active network interface found.\n\033[0m");
         exit(1);
     }
 
@@ -63,7 +63,7 @@ void getportnoandIP() {
         // Create a temporary socket to check if the port is free
         int temp_sock = socket(AF_INET, SOCK_STREAM, 0);
         if (temp_sock < 0) {
-            perror("Error creating temporary socket");
+            perror("\033[1;31mError creating temporary socket\033[0m");
             exit(1);
         }
 
@@ -80,7 +80,7 @@ void getportnoandIP() {
         close(temp_sock);
     }
 
-    printf("Selected Port Number: %d\n", portno);
+    printf("\033[1;32mSelected Port Number:\033[0m %d\n", portno);
 
 }
 
@@ -88,7 +88,7 @@ void creatingAndBindingSocket() {
     struct sockaddr_in server_addr;
     sockFD = socket(AF_INET, SOCK_STREAM, 0);
     if (sockFD < 0) {
-        perror("Error making socket");
+        perror("\033[1;31mError making socket\033[0m");
         exit(1);
     }
 
@@ -97,7 +97,7 @@ void creatingAndBindingSocket() {
     server_addr.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(sockFD, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("Error binding socket");
+        perror("\033[1;31mError binding socket\033[0m");
         exit(1);
     }
 
@@ -106,7 +106,7 @@ void creatingAndBindingSocket() {
 void numberOfConnections() {
     char input[BUFFER_SIZE];
     while (1) {
-        printf("Enter the maximum number of people that can join the chat: ");
+        printf("\033[1;32mEnter the maximum number of people that can join the chat: \033[0m");
         if (fgets(input, sizeof(input), stdin) != NULL) {
             // Validate and convert input to an integer
             char *endptr;
@@ -114,11 +114,11 @@ void numberOfConnections() {
             
             // Check if the input is valid and greater than or equal to 2
             if (endptr != input && *endptr == '\n' && numberofConnections >= 2) {
-                printf("The number of people that can join the chat is: %d\n", numberofConnections);
+                printf("\033[1;33mThe number of people that can join the chat is: %d\n\033[0m", numberofConnections);
                 break;
             }
         }
-        printf("Invalid input. Please enter a valid number greater than or equal to 2.\n");
+        printf("\033[1;31mInvalid input. Please enter a valid number greater than or equal to 2.\n\033[0m");
     }
 }
 
@@ -136,7 +136,7 @@ void sendtoallotherusers(char buffer[255], int newsockFD){
         {
             int writeFD = write(acceptedSockets[i], buffer, strlen(buffer));
             if (writeFD < 0) {
-                error("Error writing to socket");
+                error("\033[1;31mError writing to socket\033[0m");
             }   
         }
     }
@@ -179,7 +179,7 @@ void cleanup_and_exit() {
     server_running = 0;
 
     char buffer[255];
-    snprintf(buffer, sizeof(buffer), "SERVER_SHUTDOWN\n");
+    snprintf(buffer, sizeof(buffer), "\033[1;31mSERVER_SHUTDOWN\n\033[0m");
     
     pthread_mutex_lock(&socket_mutex);
     // Notify all clients
@@ -198,7 +198,7 @@ void cleanup_and_exit() {
     }
     pthread_mutex_unlock(&socket_mutex);
     
-    printf("Server shut down successfully.\n");
+    printf("\033[1;32mServer shut down successfully.\n\033[0m");
     exit(0);
 }
 
@@ -208,7 +208,7 @@ void *Writing(void *arg) {
         bzero(buffer, sizeof(buffer));
         if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
             if (strncmp("BYE", buffer, 3) == 0) {
-                printf("Initiating server shutdown...\n");
+                printf("\033[1;31mInitiating server shutdown...\n\033[0m");
                 cleanup_and_exit();
                 break;
             }
@@ -223,10 +223,10 @@ void *ReciveandPrintData(void *arg) {
     pthread_t readThread, writeThread;
 
     if (pthread_create(&readThread, NULL, Reading, &newsockFD) != 0) {
-        error("Error creating read thread");
+        error("\033[1;32mError creating read thread\033[0m");
     }
     if (pthread_create(&writeThread, NULL, Writing, &newsockFD) != 0) {
-        error("Error creating read thread");
+        error("\033[1;31mError creating read thread\033[0m");
     }
     
 
@@ -240,12 +240,12 @@ void CreateThreadforAcceptedConnection(int newsockFD) {
     pthread_t id;
     int *sockPtr = malloc(sizeof(int)); // Allocate memory for newsockFD
     if (sockPtr == NULL) {
-        error("Memory allocation failed");
+        error("\033[1;31mMemory allocation failed\033[0m");
     }
     *sockPtr = newsockFD; // Store the value of newsockFD in dynamically allocated memory
 
     if (pthread_create(&id, NULL, ReciveandPrintData, sockPtr) != 0) {
-        error("Error creating connection thread");
+        error("\033[1;31mError creating connection thread\033[0m");
     }
 }
 
@@ -263,7 +263,7 @@ void AcceptingNewConnection() {
                 continue;
             }
             if (!server_running) break;
-            error("Error while accepting connection");
+            error("\033[1;31mError while accepting connection\033[0m");
         }
 
         pthread_mutex_lock(&socket_mutex);

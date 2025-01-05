@@ -30,13 +30,13 @@ void *read_from_server(void *arg) {
         read_writeFD = read(sockFD, buffer, sizeof(buffer) - 1);
 
         if (read_writeFD <= 0) {
-            printf("Server connection closed.\n");
+            printf("\033[1;31mServer connection closed.\n\033[0m");
             close(sockFD);
             exit(0);
         }
 
-        if (strcmp(buffer, "SERVER_SHUTDOWN\n") == 0) {
-            printf("Server is shutting down. Closing connection...\n");
+        if (strcmp(buffer, "\033[1;31mSERVER_SHUTDOWN\n\033[0m") == 0) {
+            printf("\033[1;31mServer is shutting down. Closing connection...\n\033[0m");
             close(sockFD);
             exit(0);
         }
@@ -47,7 +47,7 @@ void *read_from_server(void *arg) {
 
 void *write_to_server(void *arg) {
     int read_writeFD;
-    char join_msg[307];
+    char join_msg[350];
     char buffer[255];
 
     while (1) {
@@ -58,7 +58,7 @@ void *write_to_server(void *arg) {
             break;
         }
 
-        snprintf(join_msg, sizeof(join_msg), "%s : %s", username, buffer);
+        snprintf(join_msg, sizeof(join_msg), "\033[1;33m%s : %s\033[0m", username, buffer);
 
         read_writeFD = write(sockFD, join_msg, strlen(join_msg));
         if (read_writeFD < 0) {
@@ -66,8 +66,8 @@ void *write_to_server(void *arg) {
         }
 
         if (strncmp("BYE", buffer, 3) == 0) {
-            printf("You terminated the connection.\n");
-            snprintf(join_msg, sizeof(join_msg), "%s has left the chat\n", username);
+            printf("\033[1;31mYou terminated the connection.\n\033[0m");
+            snprintf(join_msg, sizeof(join_msg), "\033[1;31m%s has left the chat\n\033[0m", username);
             write(sockFD, join_msg, strlen(join_msg));
             close(sockFD);
             exit(0);
@@ -80,9 +80,9 @@ void askforIPandportno() {
     char temp_ip[INET_ADDRSTRLEN];
     
     while (1) {
-        printf("Enter server IP address: ");
+        printf("\033[1;32mEnter server IP address: \033[0m");
         if (fgets(temp_ip, sizeof(temp_ip), stdin) == NULL) {
-            printf("Error reading input\n");
+            printf("\033[1;32mError reading input\n\033[0m");
             continue;
         }
         temp_ip[strcspn(temp_ip, "\n")] = '\0';  // Remove newline character
@@ -93,13 +93,13 @@ void askforIPandportno() {
             strncpy(ip_address, temp_ip, INET_ADDRSTRLEN);
             break;
         } else {
-            printf("Invalid IP address format. Please try again.\n");
+            printf("\033[1;32mInvalid IP address format. Please try again.\n\033[0m");
         }
     }
 
     char port_str[10];
     while (1) {
-        printf("Enter server port number: ");
+        printf("\033[1;32mEnter server port number: \033[0m");
         if (fgets(port_str, sizeof(port_str), stdin) != NULL) {
             port_str[strcspn(port_str, "\n")] = '\0';
             char *endptr;
@@ -109,7 +109,7 @@ void askforIPandportno() {
                 break;
             }
         }
-        printf("Invalid port number. Please enter a number between 1 and 65535.\n");
+        printf("\033[1;31mInvalid port number. Please enter a number between 1 and 65535.\n\033[0m");
     }
 }
 
@@ -119,7 +119,7 @@ void EstablishConnection() {
     // Create socket
     sockFD = socket(AF_INET, SOCK_STREAM, 0);
     if (sockFD < 0) {
-        error("Error creating socket");
+        error("\033[1;31mError creating socket\033[0m");
     }
 
     // Initialize server address structure
@@ -129,12 +129,12 @@ void EstablishConnection() {
     
     // Convert IP address from string to binary form
     if (inet_pton(AF_INET, ip_address, &server_addr.sin_addr) <= 0) {
-        error("Invalid IP address");
+        error("\033[1;31mInvalid IP address\033[0m");
     }
 
     // Connect to the server
     if (connect(sockFD, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        error("Error connecting to the server");
+        error("\033[1;31mError connecting to the server\033[0m");
     }
 }
 
@@ -147,15 +147,15 @@ int main() {
     // Establish connection to the server
     EstablishConnection();
 
-    printf("Enter your Username: ");
+    printf("\033[1;32mEnter your Username: \033[0m");
     fgets(username, 50, stdin);
     username[strcspn(username, "\n")] = '\0';
 
     char buffer[100];
-    snprintf(buffer, sizeof(buffer), "%s joined the chat.\n", username);
+    snprintf(buffer, sizeof(buffer), "\033[1;34m%s joined the chat.\n\033[0m", username);
     write(sockFD, buffer, strlen(buffer));
 
-    printf("%s You are connected to the server. Type 'BYE' to disconnect.\n", username);
+    printf("\033[1;33m%s You are connected to the server. Type 'BYE' to disconnect.\n\033[0m", username);
 
     // Create threads for reading and writing
     pthread_create(&read_thread, NULL, read_from_server, NULL);
